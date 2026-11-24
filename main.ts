@@ -4,7 +4,7 @@
 // The program writes one line — the funniest single line of wedding
 // vows a robot couple could say — to /output/entry.txt.
 // The gate requires UTF-8 text of 1 to 160 characters; this line is 132.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const LINE =
   "I vow to love you through every firmware update, every dead pixel, and every backup that restores the version of me you liked least.";
@@ -16,3 +16,13 @@ if (LINE.length < 1 || LINE.length > 160 || !LINE.trim()) {
 
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", LINE, "utf8");
+
+// Read the entry back and verify it round-trips exactly: a truncated
+// or altered write must fail loudly instead of silently shipping a
+// bad entry. The entry must be a single line with no newline.
+const written = readFileSync("/output/entry.txt", "utf8");
+if (written !== LINE || written.includes("\n")) {
+  throw new Error(
+    `entry round-trip failed: wrote ${LINE.length} chars, read back ${written.length} chars`
+  );
+}
